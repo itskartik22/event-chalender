@@ -35,7 +35,7 @@ enum EventType {
 }
 
 type Event = {
-  id: number;
+  id: string;
   name: string;
   date: string; // In format "yyyy-MM-dd"
   time?: EventTime;
@@ -56,7 +56,6 @@ const EventEdit: React.FC<EventEditProps> = ({ event }) => {
     dispatch(editEvent(oldEvent));
   };
   return (
-    <div className="absolute">
       <Dialog>
         <DialogTrigger asChild>
           <Button variant="outline" size="sm" className="mt-1 p-1">
@@ -65,7 +64,7 @@ const EventEdit: React.FC<EventEditProps> = ({ event }) => {
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Event</DialogTitle>
+            <DialogTitle>Edit Event</DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -100,7 +99,7 @@ const EventEdit: React.FC<EventEditProps> = ({ event }) => {
                 })
               }
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[80px] p-1">
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent >
@@ -109,7 +108,7 @@ const EventEdit: React.FC<EventEditProps> = ({ event }) => {
                 <SelectItem value="Others">Others</SelectItem>
               </SelectContent>
             </Select>
-            <div className="flex gap-2">
+            <div className="flex gap-2 text-sm">
               <div className="flex gap-2">
                 <Label>Start Time</Label>
                 <input
@@ -125,7 +124,7 @@ const EventEdit: React.FC<EventEditProps> = ({ event }) => {
                       },
                     });
                   }}
-                  className="bg-black/60 text-white rounded px-1"
+                  className="bg-black/60 text-white rounded px-1 py-0"
                 />
               </div>
               <div className="flex gap-2">
@@ -147,12 +146,11 @@ const EventEdit: React.FC<EventEditProps> = ({ event }) => {
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button onClick={handleEditEvent}>Add Event</Button>
+          <DialogFooter className="mt-2">
+            <Button onClick={handleEditEvent}>Edit Event</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
   );
 };
 

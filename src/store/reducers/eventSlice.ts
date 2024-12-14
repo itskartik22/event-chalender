@@ -12,7 +12,7 @@ enum EventType {
 }
 
 type Event = {
-  id: number;
+  id: string;
   name: string;
   date: string; // In format "yyyy-MM-dd"
   time?: EventTime;
@@ -47,7 +47,7 @@ const eventManagerSlice = createSlice({
       state[event.date].push(event);
       saveToLocalStorage(state);
     },
-    deleteEvent: (state, action: PayloadAction<{ id: number; date: string }>) => {
+    deleteEvent: (state, action: PayloadAction<{ id: string; date: string }>) => {
       const { id, date } = action.payload;
       if (state[date]) {
         state[date] = state[date].filter((event) => event.id !== id);

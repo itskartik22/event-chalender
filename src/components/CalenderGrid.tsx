@@ -21,7 +21,7 @@ enum EventType {
 }
 
 type Event = {
-  id: number;
+  id: string;
   name: string;
   date: string; // In format "yyyy-MM-dd"
   time?: EventTime

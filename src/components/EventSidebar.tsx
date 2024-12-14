@@ -12,7 +12,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { FiPlus } from "react-icons/fi";
-import { MdDelete} from "react-icons/md";
+import { MdDelete } from "react-icons/md";
 import { Label } from "@radix-ui/react-label";
 import { Textarea } from "./ui/textarea";
 import {
@@ -25,6 +25,7 @@ import {
 import { useDispatch } from "react-redux";
 import { addEvent, deleteEvent } from "@/store/reducers/eventSlice";
 import EventEdit from "./EventEdit";
+import { v4 as uuidv4 } from "uuid";
 
 type EventTime = {
   start: string;
@@ -38,7 +39,7 @@ enum EventType {
 }
 
 type Event = {
-  id: number;
+  id: string;
   name: string;
   date: string; // In format "yyyy-MM-dd"
   time?: EventTime;
@@ -73,7 +74,7 @@ const EventSidebar: React.FC<SidebarProps> = ({ events, selectedDay }) => {
     if (!newEventName) return;
     dispatch(
       addEvent({
-        id: events[date] ? events[date].length + 1 : 0,
+        id: uuidv4(),
         name: newEventName,
         date: format(selectedDay, "yyyy-MM-dd"),
         time: newEventTime,
@@ -171,12 +172,12 @@ const EventSidebar: React.FC<SidebarProps> = ({ events, selectedDay }) => {
           </Dialog>
         </div>
       </div>
-      <div className="mt-4 relative">
+      <div className="mt-4 bg-white">
         {events[date] && events[date].length > 0 ? (
           events[date].map((event: Event) => (
             <div
               key={event.id}
-              className={`p-2 border rounded-lg mt-21 text-white ${
+              className={`min-h-20 flex justify-between h-auto relative p-2 border rounded-lg mt-21 text-white ${
                 event.type === "Work"
                   ? "bg-red-500"
                   : event.type === "Personal"
@@ -186,25 +187,27 @@ const EventSidebar: React.FC<SidebarProps> = ({ events, selectedDay }) => {
             >
               {/* Edit event */}
 
-              <div className="top-2 right-2 absolute">
+              <div>
+                <h3 className="font-semibold">{event.name}</h3>
+                <p className="text-sm">{event.description}</p>
+                <div className="text-xs flex gap-2">
+                  <p>Start: {event.time?.start}</p>
+                  <p className="text-red-500">End: {event.time?.end}</p>
+                </div>
+              </div>
+              <div className="flex flex-col">
                 <button
                   onClick={() => dispatch(deleteEvent(event))}
-                  className="p-1 bg-white text-red-500"
+                  className="py-2 px-[0.3rem] bg-white text-red-500"
                 >
                   <MdDelete />
                 </button>
                 <EventEdit event={event} selectedDay={selectedDay} />
               </div>
-              <h3 className="font-semibold">{event.name}</h3>
-              <p className="text-sm">{event.description}</p>
-              <div className="text-xs flex gap-2">
-                <p>Start: {event.time?.start}</p>
-                <p className="text-red-500">End: {event.time?.end}</p>
-              </div>
             </div>
           ))
         ) : (
-          <div className="absolute top-0 bottom-0 left-0 right-0 flex items-center justify-center font-semibold text-lg text-gray-800/80">
+          <div className="left-0 right-0 flex items-center justify-center font-semibold text-lg text-gray-800/80">
             No Event
           </div>
         )}
