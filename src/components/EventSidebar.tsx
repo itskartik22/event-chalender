@@ -1,18 +1,19 @@
-import React, { useState } from "react";
-import { format } from "date-fns";
-import { Button } from "@/components/ui/button"; // Using Shadcn's button component
-import { Input } from "@/components/ui/input";
+import { addEvent, deleteEvent, editEvent } from "@/store/reducers/eventSlice";
+import { Button } from "./ui/button";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { FiPlus, FiEdit } from "react-icons/fi";
-import { MdDelete } from "react-icons/md";
-import { Label } from "@radix-ui/react-label";
+  DialogTrigger,
+} from "./ui/dialog";
+import { useState } from "react";
+import { format } from "date-fns";
+import { useDispatch } from "react-redux";
+import { v4 as uuidv4 } from "uuid";
+import { Label } from "./ui/label";
+import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import {
   Select,
@@ -21,9 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { useDispatch } from "react-redux";
-import { addEvent, deleteEvent, editEvent } from "@/store/reducers/eventSlice";
-import { v4 as uuidv4 } from "uuid";
+import { MdDelete } from "react-icons/md";
+import { FiEdit, FiPlus } from "react-icons/fi";
 
 type EventTime = {
   start: string;
@@ -48,7 +48,6 @@ type Event = {
 type EventMap = {
   [key: string]: Event[];
 };
-
 type SidebarProps = {
   events: EventMap;
   selectedDay: Date;
@@ -69,6 +68,7 @@ const EventSidebar: React.FC<SidebarProps> = ({ events, selectedDay }) => {
   const [newEventDescription, setNewEventDescription] = useState<string>("");
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState<boolean>(false); // New state
   const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
 
   const handleAddEvent = () => {
@@ -83,6 +83,7 @@ const EventSidebar: React.FC<SidebarProps> = ({ events, selectedDay }) => {
         description: newEventDescription,
       })
     );
+    setIsAddDialogOpen(false);
     resetForm();
   };
 
@@ -119,7 +120,7 @@ const EventSidebar: React.FC<SidebarProps> = ({ events, selectedDay }) => {
   };
 
   return (
-    <div className="sticky top-0 left-0 w-80 h-screen overflow-scroll-auto f p-4 bg-gray-50 border-r border-gray-200">
+    <div className="sticky top-0 left-0 w-80 h-screen overflow-scroll-auto p-4 bg-gray-50 border-r border-gray-200">
       <div className="flex items-center gap-2">
         <h2 className="text-xl font-semibold">
           {selectedDay
@@ -127,83 +128,80 @@ const EventSidebar: React.FC<SidebarProps> = ({ events, selectedDay }) => {
             : "No Date Selected"}{" "}
           Events
         </h2>
-        <div>
-          <Dialog open={isEditing || false} onOpenChange={() => setIsEditing(false)}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="mt-2">
-                <FiPlus />
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{isEditing ? "Edit Event" : "Add Event"}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <Label className="font-semibold">
-                  Date: {selectedDay && format(selectedDay, "d MMMM yyyy")}
-                </Label>
-                <Input
-                  placeholder="Event Name"
-                  value={newEventName}
-                  onChange={(e) => setNewEventName(e.target.value)}
-                />
-                <Textarea
-                  placeholder="Event Description"
-                  value={newEventDescription}
-                  onChange={(e) => setNewEventDescription(e.target.value)}
-                />
-                <Select
-                  onValueChange={(value: EventType) => setNewEventType(value)}
-                  value={newEventType}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Personal">Personal</SelectItem>
-                    <SelectItem value="Work">Work</SelectItem>
-                    <SelectItem value="Others">Others</SelectItem>
-                  </SelectContent>
-                </Select>
-                <div className="flex gap-2">
-                  <div>
-                    <Label>Start Time</Label>
-                    <input
-                      type="time"
-                      value={newEventTime.start}
-                      onChange={(e) =>
-                        setNewEventTime({
-                          ...newEventTime,
-                          start: e.target.value,
-                        })
-                      }
-                      className="bg-black/60 text-white rounded px-1"
-                    />
-                  </div>
-                  <div>
-                    <Label>End Time</Label>
-                    <input
-                      type="time"
-                      value={newEventTime.end}
-                      onChange={(e) =>
-                        setNewEventTime({
-                          ...newEventTime,
-                          end: e.target.value,
-                        })
-                      }
-                      className="bg-black/60 text-white rounded px-1"
-                    />
-                  </div>
+        {/* Add Event Dialog */}
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="mt-2">
+              <FiPlus />
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Event</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Label className="font-semibold">
+                Date: {selectedDay && format(selectedDay, "d MMMM yyyy")}
+              </Label>
+              <Input
+                placeholder="Event Name"
+                value={newEventName}
+                onChange={(e) => setNewEventName(e.target.value)}
+              />
+              <Textarea
+                placeholder="Event Description"
+                value={newEventDescription}
+                onChange={(e) => setNewEventDescription(e.target.value)}
+              />
+              <Select
+                onValueChange={(value: EventType) => setNewEventType(value)}
+                value={newEventType}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Personal">Personal</SelectItem>
+                  <SelectItem value="Work">Work</SelectItem>
+                  <SelectItem value="Others">Others</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex gap-2">
+                <div>
+                  <Label>Start Time</Label>
+                  <input
+                    type="time"
+                    value={newEventTime.start}
+                    onChange={(e) =>
+                      setNewEventTime({
+                        ...newEventTime,
+                        start: e.target.value,
+                      })
+                    }
+                    className="bg-black/60 text-white rounded px-1"
+                  />
+                </div>
+                <div>
+                  <Label>End Time</Label>
+                  <input
+                    type="time"
+                    value={newEventTime.end}
+                    onChange={(e) =>
+                      setNewEventTime({
+                        ...newEventTime,
+                        end: e.target.value,
+                      })
+                    }
+                    className="bg-black/60 text-white rounded px-1"
+                  />
                 </div>
               </div>
-              <DialogFooter>
-                <Button onClick={isEditing ? handleEditEvent : handleAddEvent}>
-                  {isEditing ? "Save Changes" : "Add Event"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleAddEvent}>Add Event</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
       <div className="mt-2 bg-white h-[calc(100%-3rem)] rounded-lg p-2">
         {events[date] && events[date].length > 0 ? (
@@ -248,6 +246,75 @@ const EventSidebar: React.FC<SidebarProps> = ({ events, selectedDay }) => {
           </div>
         )}
       </div>
+      {/* Edit Event Dialog */}
+      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Event</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Label className="font-semibold">
+              Date: {selectedDay && format(selectedDay, "d MMMM yyyy")}
+            </Label>
+            <Input
+              placeholder="Event Name"
+              value={newEventName}
+              onChange={(e) => setNewEventName(e.target.value)}
+            />
+            <Textarea
+              placeholder="Event Description"
+              value={newEventDescription}
+              onChange={(e) => setNewEventDescription(e.target.value)}
+            />
+            <Select
+              onValueChange={(value: EventType) => setNewEventType(value)}
+              value={newEventType}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Personal">Personal</SelectItem>
+                <SelectItem value="Work">Work</SelectItem>
+                <SelectItem value="Others">Others</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex gap-2">
+              <div>
+                <Label>Start Time</Label>
+                <input
+                  type="time"
+                  value={newEventTime.start}
+                  onChange={(e) =>
+                    setNewEventTime({
+                      ...newEventTime,
+                      start: e.target.value,
+                    })
+                  }
+                  className="bg-black/60 text-white rounded px-1"
+                />
+              </div>
+              <div>
+                <Label>End Time</Label>
+                <input
+                  type="time"
+                  value={newEventTime.end}
+                  onChange={(e) =>
+                    setNewEventTime({
+                      ...newEventTime,
+                      end: e.target.value,
+                    })
+                  }
+                  className="bg-black/60 text-white rounded px-1"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleEditEvent}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
