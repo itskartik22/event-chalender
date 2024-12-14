@@ -8,10 +8,9 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { FiPlus } from "react-icons/fi";
+import { FiPlus, FiEdit } from "react-icons/fi";
 import { MdDelete } from "react-icons/md";
 import { Label } from "@radix-ui/react-label";
 import { Textarea } from "./ui/textarea";
@@ -23,8 +22,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { useDispatch } from "react-redux";
-import { addEvent, deleteEvent } from "@/store/reducers/eventSlice";
-import EventEdit from "./EventEdit";
+import { addEvent, deleteEvent, editEvent } from "@/store/reducers/eventSlice";
 import { v4 as uuidv4 } from "uuid";
 
 type EventTime = {
@@ -70,6 +68,9 @@ const EventSidebar: React.FC<SidebarProps> = ({ events, selectedDay }) => {
   );
   const [newEventDescription, setNewEventDescription] = useState<string>("");
 
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
+
   const handleAddEvent = () => {
     if (!newEventName) return;
     dispatch(
@@ -82,9 +83,39 @@ const EventSidebar: React.FC<SidebarProps> = ({ events, selectedDay }) => {
         description: newEventDescription,
       })
     );
-    setNewEventDescription("");
+    resetForm();
+  };
+
+  const handleEditEvent = () => {
+    if (!eventToEdit) return;
+    dispatch(
+      editEvent({
+        ...eventToEdit,
+        name: newEventName,
+        time: newEventTime,
+        type: newEventType,
+        description: newEventDescription,
+      })
+    );
+    setIsEditing(false);
+    resetForm();
+  };
+
+  const handleEditButtonClick = (event: Event) => {
+    setIsEditing(true);
+    setEventToEdit(event);
+    setNewEventName(event.name);
+    setNewEventTime(event.time || { start: "", end: "" });
+    setNewEventType(event.type);
+    setNewEventDescription(event.description || "");
+  };
+
+  const resetForm = () => {
     setNewEventName("");
     setNewEventTime({ start: "", end: "" });
+    setNewEventType(EventType.Personal);
+    setNewEventDescription("");
+    setEventToEdit(null);
   };
 
   return (
@@ -97,7 +128,7 @@ const EventSidebar: React.FC<SidebarProps> = ({ events, selectedDay }) => {
           Events
         </h2>
         <div>
-          <Dialog>
+          <Dialog open={isEditing || false} onOpenChange={() => setIsEditing(false)}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="mt-2">
                 <FiPlus />
@@ -105,8 +136,7 @@ const EventSidebar: React.FC<SidebarProps> = ({ events, selectedDay }) => {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Event</DialogTitle>
-                <DialogDescription></DialogDescription>
+                <DialogTitle>{isEditing ? "Edit Event" : "Add Event"}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <Label className="font-semibold">
@@ -124,6 +154,7 @@ const EventSidebar: React.FC<SidebarProps> = ({ events, selectedDay }) => {
                 />
                 <Select
                   onValueChange={(value: EventType) => setNewEventType(value)}
+                  value={newEventType}
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Type" />
@@ -135,7 +166,7 @@ const EventSidebar: React.FC<SidebarProps> = ({ events, selectedDay }) => {
                   </SelectContent>
                 </Select>
                 <div className="flex gap-2">
-                  <div className="flex gap-2">
+                  <div>
                     <Label>Start Time</Label>
                     <input
                       type="time"
@@ -149,7 +180,7 @@ const EventSidebar: React.FC<SidebarProps> = ({ events, selectedDay }) => {
                       className="bg-black/60 text-white rounded px-1"
                     />
                   </div>
-                  <div className="flex gap-2">
+                  <div>
                     <Label>End Time</Label>
                     <input
                       type="time"
@@ -166,18 +197,20 @@ const EventSidebar: React.FC<SidebarProps> = ({ events, selectedDay }) => {
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={handleAddEvent}>Add Event</Button>
+                <Button onClick={isEditing ? handleEditEvent : handleAddEvent}>
+                  {isEditing ? "Save Changes" : "Add Event"}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
       </div>
-      <div className="mt-4 bg-white">
+      <div className="mt-2 bg-white h-[calc(100%-3rem)] rounded-lg p-2">
         {events[date] && events[date].length > 0 ? (
           events[date].map((event: Event) => (
             <div
               key={event.id}
-              className={`min-h-20 flex justify-between h-auto relative p-2 border rounded-lg mt-21 text-white ${
+              className={`min-h-20 flex justify-between h-auto relative p-2 border rounded-lg mt-2 text-white ${
                 event.type === "Work"
                   ? "bg-red-500"
                   : event.type === "Personal"
@@ -185,14 +218,12 @@ const EventSidebar: React.FC<SidebarProps> = ({ events, selectedDay }) => {
                   : "bg-slate-500"
               }`}
             >
-              {/* Edit event */}
-
               <div>
                 <h3 className="font-semibold">{event.name}</h3>
                 <p className="text-sm">{event.description}</p>
                 <div className="text-xs flex gap-2">
                   <p>Start: {event.time?.start}</p>
-                  <p className="text-red-500">End: {event.time?.end}</p>
+                  <p>End: {event.time?.end}</p>
                 </div>
               </div>
               <div className="flex flex-col">
@@ -202,12 +233,17 @@ const EventSidebar: React.FC<SidebarProps> = ({ events, selectedDay }) => {
                 >
                   <MdDelete />
                 </button>
-                <EventEdit event={event} selectedDay={selectedDay} />
+                <button
+                  onClick={() => handleEditButtonClick(event)}
+                  className="py-2 px-[0.3rem] bg-white text-blue-500 mt-1"
+                >
+                  <FiEdit />
+                </button>
               </div>
             </div>
           ))
         ) : (
-          <div className="left-0 right-0 flex items-center justify-center font-semibold text-lg text-gray-800/80">
+          <div className="h-full flex items-center justify-center font-semibold text-lg text-gray-800/80">
             No Event
           </div>
         )}
