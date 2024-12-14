@@ -50,7 +50,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const endDate = endOfWeek(endOfMonth(currentMonth));
 
   const days = eachDayOfInterval({ start: startDate, end: endDate });
-  console.log(events);
+  console.log(selectedDay, "selectedDay");
 
   return (
     <div className="w-auto grid grid-cols-7 gap-1 p-2">
@@ -70,7 +70,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         const dayKey = format(day, "yyyy-MM-dd");
         const isCurrentMonth = isSameMonth(day, currentMonth);
         const eventsByDay = events[dayKey] || [];
-        console.log(eventsByDay);
+        console.log(day, "day")
         return (
           <div
             key={dayKey}
@@ -79,7 +79,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                 ? "hover:bg-gray-200 cursor-pointer"
                 : "text-gray-400"
             } ${isToday(day) ? "border border-blue-500" : ""} ${
-              selectedDay === day ? "bg-blue-200" : ""
+              format(selectedDay, "d MM") === format(day, "d MM") ? "bg-blue-200" : ""
             }`}
             onClick={() => onDayClick(day)}
           >
